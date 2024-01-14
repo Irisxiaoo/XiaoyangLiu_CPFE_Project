@@ -76,7 +76,7 @@ merged_data = sortrows(merged_data,'code','ascend');
 
 % Part-2
 
-% 程子珊 2000015458
+% 程子珊 2000015458 & 肖珺文 2000015401
 % CPFE_project_momentum
 
 % (b) Every K months, sort stocks into five groups based on previous K 
@@ -91,6 +91,9 @@ K = [1 3 6 12 24];
 % 按公司名称分组计算K月收益率
 [G,company] = findgroups(merged_data.code);
 [row_num col_num] = size(merged_data);
+
+% 设置按K与时间存储spread的数组
+all_spreads = [];
 
 % 对每个时间间隔K月进行分组、持有和计算平均收益率
 % 计算结果存在table里最后一起输出
@@ -142,7 +145,29 @@ for i = 1:length(K)
 
     % 得到了每个日期下，从低到高5个分组内的等权重收益率
     us_av_table = unstack(avvr_table, 'avreturn', 'rtport');
+    
+    % 合并到spread总表
+    all_spreads = [all_spreads; table(repmat(K(i), size(k_spreads, 1), 1), k_spreads, 'VariableNames', {'K', 'Spread'})];
 end
+
+% 分析动量效应：
+
+% 统计检验：如果spread显著大于0，表明存在正向动量效应
+for i = 1:length(K)
+    % 选取当前K值下的spread数据
+    current_spreads = all_spreads.Spread(all_spreads.K == K(i));
+    
+    % 进行t-test
+    [h,p,ci,stats] = ttest(current_spreads);
+    fprintf('K = %d: t-stat = %.2f, p-value = %.3f\n', K(i), stats.tstat, p);
+end
+
+%Result：支持正向动量效应的存在
+% K = 1: t-stat = 34.06, p-value = 0.000
+% K = 3: t-stat = 40.68, p-value = 0.000
+% K = 6: t-stat = 49.29, p-value = 0.000
+% K = 12: t-stat = 55.00, p-value = 0.000
+% K = 24: t-stat = 72.75, p-value = 0.000
 
 
 
